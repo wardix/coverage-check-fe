@@ -150,7 +150,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       {/* Hidden input for form submission */}
       <input 
         type="hidden" 
-        value={value}
+        value={value || ''}
         id={id}
         name={name}
       />
