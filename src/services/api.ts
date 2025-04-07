@@ -38,9 +38,17 @@ export const apiService = {
     return response.data;
   },
 
-  // Get salesmen list
+  // Get salesmen list (all)
   getSalesmen: async (): Promise<string[]> => {
     const response = await api.get<string[]>('/salesman');
+    return response.data;
+  },
+
+  // Search salesmen (with query parameter)
+  searchSalesmen: async (query: string): Promise<string[]> => {
+    const response = await api.get<string[]>(`/salesman/search`, {
+      params: { query }
+    });
     return response.data;
   },
 

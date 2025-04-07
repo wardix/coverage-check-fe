@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import Skeleton from 'react-loading-skeleton';
+import SearchableDropdown from './SearchableDropdown';
 
 const BuildingForm = () => {
   const [salesmen, setSalesmen] = useState<string[]>([]);
@@ -33,12 +34,14 @@ const BuildingForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [salesmenData, buildingTypesData] = await Promise.all([
-          apiService.getSalesmen(),
-          apiService.getBuildingTypes(),
-        ]);
-        setSalesmen(salesmenData);
+        // Only fetch building types on initial load
+        // For salesmen, we'll just fetch initially with empty search
+        const buildingTypesData = await apiService.getBuildingTypes();
         setBuildingTypes(buildingTypesData);
+
+        // Get initial salesmen list (could be limited to top results)
+        const salesmenData = await apiService.searchSalesmen('');
+        setSalesmen(salesmenData);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load form data. Please refresh the page.');
@@ -52,7 +55,7 @@ const BuildingForm = () => {
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsSubmitting(true);
-    
+
     try {
       // Create FormData object
       const formData = new FormData();
@@ -61,30 +64,25 @@ const BuildingForm = () => {
       formData.append('customerAddress', data.customerAddress);
       formData.append('coordinates', data.coordinates);
       formData.append('buildingType', data.buildingType);
-      
+
       // Append operators as multiple values
       data.operators.forEach(operator => {
         formData.append('operators', operator);
       });
-      
+
       // Append photos if any
       if (data.buildingPhotos) {
         const files = data.buildingPhotos as FileList;
-        
+
         if (files && files.length > 0) {
           for (let i = 0; i < files.length; i++) {
             formData.append('buildingPhotos', files[i]);
           }
         }
       }
-      
-      console.log('Form data being sent:');
-      for (const pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-      
+
       const response = await apiService.submitForm(formData);
-      
+
       if (response.success) {
         toast.success('Form submitted successfully!');
         router.push(`/success?id=${response.submissionId}`);
@@ -122,15 +120,14 @@ const BuildingForm = () => {
       (position) => {
         // Format the coordinates as "latitude,longitude"
         const coordinates = `${position.coords.latitude},${position.coords.longitude}`;
-        
+
         // Use React Hook Form's setValue method to properly update the form state
-        // This ensures the form validation is aware of the value change
-        setValue('coordinates', coordinates, { 
+        setValue('coordinates', coordinates, {
           shouldValidate: true,
           shouldDirty: true,
           shouldTouch: true
         });
-        
+
         setIsLoading(false);
         toast.success('Location captured successfully');
       },
@@ -157,24 +154,59 @@ const BuildingForm = () => {
   return (
     <div className="container mx-auto p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Building Information Form</h1>
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Salesman Selection */}
+        {/* Salesman Selection - Now using SearchableDropdown with server search */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Salesman Name*</label>
-          <select
-            {...register('salesmanName')}
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select a salesman</option>
-            {salesmen.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name="salesmanName"
+            control={control}
+            render={({ field }) => (
+              <SearchableDropdown
+                options={salesmen}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select a salesman"
+                isLoading={isLoading}
+                id="salesmanName"
+                serverSearchEnabled={true}
+                onSearch={async (query) => {
+                  try {
+                    const results = await apiService.searchSalesmen(query);
+                    setSalesmen(results);
+                  } catch (error) {
+                    console.error('Error searching salesmen:', error);
+                    toast.error('Failed to search salesmen');
+                  }
+                }}
+              />
+            )}
+          />
           {errors.salesmanName && (
             <p className="mt-1 text-sm text-red-600">{errors.salesmanName.message}</p>
+          )}
+        </div>
+
+        {/* Building Type Selection - Using regular SearchableDropdown (local filtering) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Building Type*</label>
+          <Controller
+            name="buildingType"
+            control={control}
+            render={({ field }) => (
+              <SearchableDropdown
+                options={buildingTypes}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select building type"
+                isLoading={isLoading}
+                id="buildingType"
+              />
+            )}
+          />
+          {errors.buildingType && (
+            <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
           )}
         </div>
 
@@ -230,25 +262,6 @@ const BuildingForm = () => {
           )}
         </div>
 
-        {/* Building Type */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Building Type*</label>
-          <select
-            {...register('buildingType')}
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select building type</option>
-            {buildingTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          {errors.buildingType && (
-            <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
-          )}
-        </div>
-
         {/* Operators (Checkbox group) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Operators*</label>
@@ -269,7 +282,7 @@ const BuildingForm = () => {
                           const value = e.target.value;
                           const isChecked = e.target.checked;
                           const currentValues = field.value || [];
-                          
+
                           if (isChecked) {
                             field.onChange([...currentValues, value]);
                           } else {
