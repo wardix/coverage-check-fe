@@ -99,7 +99,7 @@ export default function SubmissionDetailPage() {
                 <p>{formatDate(submission.timestamp)}</p>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <div className="bg-gray-50 p-4 rounded-md">
                 <p className="text-sm text-gray-500 mb-1">Salesman</p>
@@ -116,14 +116,21 @@ export default function SubmissionDetailPage() {
                 <p>{submission.customerName}</p>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <div className="bg-gray-50 p-4 rounded-md">
                 <p className="text-sm text-gray-500 mb-1">Address</p>
                 <p className="whitespace-pre-line">{submission.customerAddress}</p>
               </div>
             </div>
-            
+
+            <div className="mb-4">
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-sm text-gray-500 mb-1">Village</p>
+                <p>{submission.village}</p>
+              </div>
+            </div>
+
             <div className="mb-4">
               <div className="bg-gray-50 p-4 rounded-md">
                 <p className="text-sm text-gray-500 mb-1">Coordinates</p>
@@ -150,7 +157,7 @@ export default function SubmissionDetailPage() {
               <p className="text-sm text-gray-500 mb-1">Building Type</p>
               <p>{submission.buildingType}</p>
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500 mb-1">Operators</p>
               <div className="flex flex-wrap gap-2 mt-2">
@@ -173,8 +180,8 @@ export default function SubmissionDetailPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {submission.buildingPhotos.map((photo, index) => (
                 <div key={index} className="bg-gray-50 p-2 rounded-md">
-                  <a 
-                    href={`/uploads/${photo}`} 
+                  <a
+                    href={`/uploads/${photo}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

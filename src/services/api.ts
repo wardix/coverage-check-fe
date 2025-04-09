@@ -9,6 +9,7 @@ export type FormSubmission = {
   salesmanName: string;
   customerName: string;
   customerAddress: string;
+  village: string; // Added village field
   coordinates: string;
   buildingType: string;
   operators: string[];
@@ -47,6 +48,14 @@ export const apiService = {
   // Search salesmen (with query parameter)
   searchSalesmen: async (query: string): Promise<string[]> => {
     const response = await api.get<string[]>(`/salesman/search`, {
+      params: { query }
+    });
+    return response.data;
+  },
+
+  // Search villages (with query parameter)
+  searchVillages: async (query: string): Promise<string[]> => {
+    const response = await api.get<string[]>(`/villages/search`, {
       params: { query }
     });
     return response.data;

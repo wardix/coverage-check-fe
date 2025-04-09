@@ -35,6 +35,7 @@ export const formSchema = z.object({
   salesmanName: z.string().min(1, 'Salesman name is required'),
   customerName: z.string().min(1, 'Customer name is required'),
   customerAddress: z.string().min(1, 'Customer address is required'),
+  village: z.string().min(1, 'Village name is required'),
   coordinates: z.string().min(1, 'Coordinates are required'),
   buildingType: z.string().min(1, 'Building type is required'),
   operators: z.array(z.string()).min(1, 'At least one operator is required'),

@@ -13,6 +13,7 @@ import SearchableDropdown from './SearchableDropdown';
 const BuildingForm = () => {
   const [salesmen, setSalesmen] = useState<string[]>([]);
   const [buildingTypes, setBuildingTypes] = useState<string[]>([]);
+  const [villages, setVillages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -28,6 +29,7 @@ const BuildingForm = () => {
     defaultValues: {
       operators: [],
       coordinates: '',
+      village: '',
     },
   });
 
@@ -42,6 +44,10 @@ const BuildingForm = () => {
         // Get initial salesmen list (could be limited to top results)
         const salesmenData = await apiService.searchSalesmen('');
         setSalesmen(salesmenData);
+
+        // Get initial villages list
+        const villagesData = await apiService.searchVillages('');
+        setVillages(villagesData);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load form data. Please refresh the page.');
@@ -62,6 +68,7 @@ const BuildingForm = () => {
       formData.append('salesmanName', data.salesmanName);
       formData.append('customerName', data.customerName);
       formData.append('customerAddress', data.customerAddress);
+      formData.append('village', data.village);
       formData.append('coordinates', data.coordinates);
       formData.append('buildingType', data.buildingType);
 
@@ -140,7 +147,7 @@ const BuildingForm = () => {
     return (
       <div className="container mx-auto p-6 max-w-2xl">
         <Skeleton height={50} className="mb-6" />
-        <Skeleton height={40} className="mb-4" count={6} />
+        <Skeleton height={40} className="mb-4" count={7} />
         <Skeleton height={100} className="mb-4" />
         <Skeleton height={60} />
       </div>
@@ -229,6 +236,38 @@ const BuildingForm = () => {
           />
           {errors.customerAddress && (
             <p className="mt-1 text-sm text-red-600">{errors.customerAddress.message}</p>
+          )}
+        </div>
+
+        {/* Village field - Now searchable dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Village*</label>
+          <Controller
+            name="village"
+            control={control}
+            render={({ field }) => (
+              <SearchableDropdown
+                options={villages}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select or type village name"
+                isLoading={isLoading}
+                id="village"
+                serverSearchEnabled={true}
+                onSearch={async (query) => {
+                  try {
+                    const results = await apiService.searchVillages(query);
+                    setVillages(results);
+                  } catch (error) {
+                    console.error('Error searching villages:', error);
+                    toast.error('Failed to search villages');
+                  }
+                }}
+              />
+            )}
+          />
+          {errors.village && (
+            <p className="mt-1 text-sm text-red-600">{errors.village.message}</p>
           )}
         </div>
 
