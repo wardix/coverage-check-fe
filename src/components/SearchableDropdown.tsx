@@ -89,7 +89,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
       >
-        <span className={value ? 'text-gray-900' : 'text-gray-500'}>
+        {/* Improved contrast for the selected value or placeholder */}
+        <span className={value ? 'text-gray-900 font-medium' : 'text-gray-500 font-medium'}>
           {value || placeholder}
         </span>
         <svg 
@@ -114,7 +115,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder="Search..."
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2 border border-gray-300 rounded-md text-gray-900 font-medium"
               autoFocus
             />
           </div>
@@ -128,13 +129,13 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               Searching...
             </div>
           ) : filteredOptions.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">No options found</div>
+            <div className="p-4 text-center text-gray-700 font-medium">No options found</div>
           ) : (
             <ul>
               {filteredOptions.map((option) => (
                 <li 
                   key={option} 
-                  className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${
+                  className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-900 font-medium ${
                     option === value ? 'bg-blue-100' : ''
                   }`}
                   onClick={() => handleSelect(option)}
