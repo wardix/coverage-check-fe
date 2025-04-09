@@ -151,7 +151,7 @@ export default function SubmissionDetailPage() {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-2">Building Information</h2>
+          <h2 className="text-lg font-semibold mb-2">Order Information</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500 mb-1">Building Type</p>

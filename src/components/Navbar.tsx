@@ -15,7 +15,7 @@ export default function Navbar() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-xl font-bold text-blue-600">
-                Building Info System
+                Coverage Check Order
               </Link>
             </div>
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">

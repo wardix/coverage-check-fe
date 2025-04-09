@@ -8,7 +8,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Building Information System',
+  title: 'Coverage Check Order',
   description: 'Collect and manage building information and site visits',
 };
 

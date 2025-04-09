@@ -1,4 +1,4 @@
-import BuildingForm from '@/components/BuildingForm';
+import OrderForm from '@/components/OrderForm';
 import Navbar from '@/components/Navbar';
 
 export default function Home() {
@@ -8,13 +8,13 @@ export default function Home() {
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-4">
           <header className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Building Information System</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Coverage Check Order</h1>
             <p className="text-gray-600 mt-2">
-              Record building information and site visits
+              Record order information
             </p>
           </header>
           
-          <BuildingForm />
+          <OrderForm />
         </div>
       </div>
     </div>

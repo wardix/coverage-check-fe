@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Skeleton from 'react-loading-skeleton';
 import SearchableDropdown from './SearchableDropdown';
 
-const BuildingForm = () => {
+const OrderForm = () => {
   const [salesmen, setSalesmen] = useState<string[]>([]);
   const [buildingTypes, setBuildingTypes] = useState<string[]>([]);
   const [villages, setVillages] = useState<string[]>([]);
@@ -156,7 +156,7 @@ const BuildingForm = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Building Information Form</h1>
+      <h1 className="text-2xl font-bold mb-6">Order Information Form</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Salesman Selection - Now using SearchableDropdown with server search */}
@@ -394,4 +394,4 @@ const BuildingForm = () => {
   );
 };
 
-export default BuildingForm;
+export default OrderForm;
