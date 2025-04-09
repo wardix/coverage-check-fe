@@ -174,7 +174,13 @@ const BuildingForm = () => {
                 isLoading={isLoading}
                 id="salesmanName"
                 serverSearchEnabled={true}
+                debounceTime={500}
                 onSearch={async (query) => {
+                  // Don't search if the query is less than 2 characters
+                  if (query.trim().length < 2 && query.trim().length > 0) {
+                    return;
+                  }
+
                   try {
                     const results = await apiService.searchSalesmen(query);
                     setSalesmen(results);
@@ -239,7 +245,7 @@ const BuildingForm = () => {
           )}
         </div>
 
-        {/* Village field - Now searchable dropdown */}
+        {/* Village field - Now using improved SearchableDropdown */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Village*</label>
           <Controller
@@ -254,7 +260,13 @@ const BuildingForm = () => {
                 isLoading={isLoading}
                 id="village"
                 serverSearchEnabled={true}
+                debounceTime={800} // Increased debounce time for village search
                 onSearch={async (query) => {
+                  // Don't search if the query is less than 3 characters
+                  if (query.trim().length < 3 && query.trim().length > 0) {
+                    return;
+                  }
+
                   try {
                     const results = await apiService.searchVillages(query);
                     setVillages(results);
