@@ -99,13 +99,9 @@ const BuildingForm = () => {
 
   // Common operators for selection
   const commonOperators = [
-    'Elevator',
-    'HVAC',
-    'Fire Alarm',
-    'Security System',
-    'Plumbing',
-    'Electrical',
-    'Lighting',
+    'CGS',
+    'FS',
+    'SIP',
   ];
 
   // Function to get user's current location
