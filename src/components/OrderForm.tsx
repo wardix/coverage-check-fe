@@ -27,7 +27,7 @@ const OrderForm = () => {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      operators: [],
+      operators: ['CGS', 'FS', 'SIP'],
       coordinates: '',
       village: '',
     },
