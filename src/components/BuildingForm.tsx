@@ -193,7 +193,7 @@ const BuildingForm = () => {
             )}
           />
           {errors.salesmanName && (
-            <p className="mt-1 text-sm text-red-600">{errors.salesmanName.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.salesmanName.message?.toString()}</p>
           )}
         </div>
 
@@ -215,7 +215,7 @@ const BuildingForm = () => {
             )}
           />
           {errors.buildingType && (
-            <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.buildingType.message?.toString()}</p>
           )}
         </div>
 
@@ -228,7 +228,7 @@ const BuildingForm = () => {
             className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           />
           {errors.customerName && (
-            <p className="mt-1 text-sm text-red-600">{errors.customerName.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.customerName.message?.toString()}</p>
           )}
         </div>
 
@@ -241,7 +241,7 @@ const BuildingForm = () => {
             className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           />
           {errors.customerAddress && (
-            <p className="mt-1 text-sm text-red-600">{errors.customerAddress.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.customerAddress.message?.toString()}</p>
           )}
         </div>
 
@@ -279,7 +279,7 @@ const BuildingForm = () => {
             )}
           />
           {errors.village && (
-            <p className="mt-1 text-sm text-red-600">{errors.village.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.village.message?.toString()}</p>
           )}
         </div>
 
@@ -305,7 +305,7 @@ const BuildingForm = () => {
             </button>
           </div>
           {errors.coordinates && (
-            <p className="mt-1 text-sm text-red-600">{errors.coordinates.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.coordinates.message?.toString()}</p>
           )}
         </div>
 
@@ -348,7 +348,7 @@ const BuildingForm = () => {
             />
           </div>
           {errors.operators && (
-            <p className="mt-1 text-sm text-red-600">{errors.operators.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.operators.message?.toString()}</p>
           )}
         </div>
 
@@ -373,7 +373,7 @@ const BuildingForm = () => {
           />
           <p className="mt-1 text-xs text-gray-500">Upload up to 5 photos (JPG, PNG, GIF, WebP). Max 10MB each.</p>
           {errors.buildingPhotos && (
-            <p className="mt-1 text-sm text-red-600">{errors.buildingPhotos.message}</p>
+            <p className="mt-1 text-sm text-red-600">{errors.buildingPhotos.message?.toString()}</p>
           )}
         </div>
 
