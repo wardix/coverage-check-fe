@@ -105,6 +105,22 @@ export default function SubmissionDetailPage() {
                   <p className="text-gray-900 font-medium">{submission.salesmanName}</p>
                 </div>
               </div>
+
+              <div className="mb-4">
+                <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Operators</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {submission.operators.map((operator) => (
+                      <span
+                        key={operator}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-200 text-blue-800 border border-blue-300"
+                      >
+                        {operator}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -146,28 +162,11 @@ export default function SubmissionDetailPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800">Order Information</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
-                <p className="text-sm font-medium text-gray-600 mb-1">Building Type</p>
-                <p className="text-gray-900 font-medium">{submission.buildingType}</p>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
-                <p className="text-sm font-medium text-gray-600 mb-1">Operators</p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {submission.operators.map((operator) => (
-                    <span
-                      key={operator}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-200 text-blue-800 border border-blue-300"
-                    >
-                      {operator}
-                    </span>
-                  ))}
+              <div className="mb-4">
+                <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Building Type</p>
+                  <p className="text-gray-900 font-medium">{submission.buildingType}</p>
                 </div>
               </div>
             </div>
