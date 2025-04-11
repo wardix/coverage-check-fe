@@ -27,7 +27,7 @@ const OrderForm = () => {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      operators: ['CGS', 'FS', 'SIP'],
+      operators: [],
       coordinates: '',
       village: '',
     },
@@ -96,9 +96,12 @@ const OrderForm = () => {
       } else {
         toast.error(response.message || 'Failed to submit form');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit form');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to submit form';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

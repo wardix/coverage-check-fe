@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiService, FormSubmission } from '@/services/api';
 import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
 import Link from 'next/link';
+import Image from 'next/image';
 import AdminNavbar from '@/components/AdminNavbar';
 
 export default function SubmissionDetailPage() {
@@ -15,22 +16,9 @@ export default function SubmissionDetailPage() {
 
   const [submission, setSubmission] = useState<FormSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiKey, setApiKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Get API key from localStorage
-    const storedKey = localStorage.getItem('admin_api_key');
-    if (!storedKey) {
-      toast.error('Authentication required');
-      router.push('/admin');
-      return;
-    }
-
-    setApiKey(storedKey);
-    fetchSubmission(storedKey);
-  }, [submissionId, router]);
-
-  const fetchSubmission = async (key: string) => {
+  // Define fetchSubmission with useCallback to avoid the dependency warning
+  const fetchSubmission = useCallback(async (key: string) => {
     setIsLoading(true);
     try {
       const data = await apiService.getSubmission(submissionId, key);
@@ -42,7 +30,19 @@ export default function SubmissionDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [submissionId, router]);
+
+  useEffect(() => {
+    // Get API key from localStorage
+    const storedKey = localStorage.getItem('admin_api_key');
+    if (!storedKey) {
+      toast.error('Authentication required');
+      router.push('/admin');
+      return;
+    }
+
+    fetchSubmission(storedKey);
+  }, [fetchSubmission, router]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -105,22 +105,6 @@ export default function SubmissionDetailPage() {
                   <p className="text-gray-900 font-medium">{submission.salesmanName}</p>
                 </div>
               </div>
-
-              <div className="mb-4">
-                <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Operators</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {submission.operators.map((operator) => (
-                      <span
-                        key={operator}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-200 text-blue-800 border border-blue-300"
-                      >
-                        {operator}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div>
@@ -162,11 +146,28 @@ export default function SubmissionDetailPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="mb-4">
-                <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Building Type</p>
-                  <p className="text-gray-900 font-medium">{submission.buildingType}</p>
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">Order Information</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Building Type</p>
+                <p className="text-gray-900 font-medium">{submission.buildingType}</p>
+              </div>
+
+              <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Operators</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {submission.operators.map((operator) => (
+                    <span
+                      key={operator}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-200 text-blue-800 border border-blue-300"
+                    >
+                      {operator}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -184,11 +185,15 @@ export default function SubmissionDetailPage() {
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <img
-                        src={`/uploads/${photo}`}
-                        alt={`Building photo ${index + 1}`}
-                        className="w-full h-48 object-cover rounded-md border border-gray-300"
-                      />
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={`/uploads/${photo}`}
+                          alt={`Building photo ${index + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover rounded-md border border-gray-300"
+                        />
+                      </div>
                     </a>
                   </div>
                 ))}

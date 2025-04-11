@@ -4,9 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiService } from '@/services/api';
 import { toast } from 'react-toastify';
-import Link from 'next/link';
 import axios from 'axios';
 import AdminNavbar from '@/components/AdminNavbar';
+
+// Define a simple response structure type
+interface ApiResponse {
+  success?: boolean;
+  salesmanData?: string[];
+  buildingTypes?: string[];
+  error?: string;
+}
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -76,7 +83,7 @@ export default function AdminSettingsPage() {
     setIsAddingSalesman(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await axios.post(`${API_URL}/salesman`, { name: newSalesman }, {
+      const response = await axios.post<ApiResponse>(`${API_URL}/salesman`, { name: newSalesman }, {
         headers: {
           'X-API-Key': apiKey,
         },
@@ -84,14 +91,25 @@ export default function AdminSettingsPage() {
 
       if (response.data.success) {
         toast.success('Salesman added successfully');
-        setSalesmen(response.data.salesmanData);
+        if (response.data.salesmanData) {
+          setSalesmen(response.data.salesmanData);
+        }
         setNewSalesman('');
       } else {
         toast.error(response.data.error || 'Failed to add salesman');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding salesman:', error);
-      toast.error(error.response?.data?.error || 'Failed to add salesman');
+      // Safer error handling without type assertions
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorMsg = typeof error.response.data === 'object' && 
+                       'error' in error.response.data ? 
+                       String(error.response.data.error) : 
+                       'Failed to add salesman';
+        toast.error(errorMsg);
+      } else {
+        toast.error('Failed to add salesman');
+      }
     } finally {
       setIsAddingSalesman(false);
     }
@@ -112,7 +130,7 @@ export default function AdminSettingsPage() {
     setIsAddingBuildingType(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await axios.post(`${API_URL}/building-types`, { type: newBuildingType }, {
+      const response = await axios.post<ApiResponse>(`${API_URL}/building-types`, { type: newBuildingType }, {
         headers: {
           'X-API-Key': apiKey,
         },
@@ -120,14 +138,25 @@ export default function AdminSettingsPage() {
 
       if (response.data.success) {
         toast.success('Building type added successfully');
-        setBuildingTypes(response.data.buildingTypes);
+        if (response.data.buildingTypes) {
+          setBuildingTypes(response.data.buildingTypes);
+        }
         setNewBuildingType('');
       } else {
         toast.error(response.data.error || 'Failed to add building type');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding building type:', error);
-      toast.error(error.response?.data?.error || 'Failed to add building type');
+      // Safer error handling without type assertions
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorMsg = typeof error.response.data === 'object' && 
+                       'error' in error.response.data ? 
+                       String(error.response.data.error) : 
+                       'Failed to add building type';
+        toast.error(errorMsg);
+      } else {
+        toast.error('Failed to add building type');
+      }
     } finally {
       setIsAddingBuildingType(false);
     }
