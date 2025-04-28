@@ -68,6 +68,7 @@ const OrderForm = () => {
       formData.append('salesmanName', data.salesmanName);
       formData.append('customerName', data.customerName);
       formData.append('customerAddress', data.customerAddress);
+      formData.append('customerHomeNo', data.customerHomeNo);
       formData.append('village', data.village);
       formData.append('coordinates', data.coordinates);
       formData.append('buildingType', data.buildingType);
@@ -247,6 +248,20 @@ const OrderForm = () => {
             <p className="mt-1 text-sm text-red-600">{errors.customerAddress.message?.toString()}</p>
           )}
         </div>
+
+        {/* Customer Address */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Home No*</label>
+          <input
+            type="text"
+            {...register('customerHomeNo')}
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+          {errors.customerHomeNo && (
+            <p className="mt-1 text-sm text-red-600">{errors.customerHomeNo.message?.toString()}</p>
+          )}
+        </div>
+
 
         {/* Village field - Now using improved SearchableDropdown */}
         <div>
