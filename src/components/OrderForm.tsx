@@ -372,7 +372,7 @@ const OrderForm = () => {
 
         {/* Building Photos */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Building Photos (Max 5)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Building Photos</label>
           <Controller
             name="buildingPhotos"
             control={control}
@@ -380,7 +380,6 @@ const OrderForm = () => {
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
-                multiple
                 onChange={(e) => {
                   // Pass the FileList to the form
                   field.onChange(e.target.files);
@@ -389,7 +388,7 @@ const OrderForm = () => {
               />
             )}
           />
-          <p className="mt-1 text-xs text-gray-500">Upload up to 5 photos (JPG, PNG, GIF, WebP). Max 10MB each.</p>
+          <p className="mt-1 text-xs text-gray-500">JPG, PNG, GIF, WebP. Max 10MB.</p>
           {errors.buildingPhotos && (
             <p className="mt-1 text-sm text-red-600">{errors.buildingPhotos.message?.toString()}</p>
           )}
