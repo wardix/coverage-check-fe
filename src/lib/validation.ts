@@ -45,7 +45,7 @@ export const formSchema = z.object({
   buildingType: z.string().min(1, "Building type is required"),
   operators: z.array(z.string()).min(1, "At least one operator is required"),
   buildingPhotos: fileSchema.optional(),
-  remarks: z.string().optional(),
+  remarks: z.string(),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

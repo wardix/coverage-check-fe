@@ -30,7 +30,6 @@ const OrderForm = () => {
       operators: [],
       coordinates: "",
       village: "",
-      remarks: "",
     },
   });
 
@@ -73,7 +72,7 @@ const OrderForm = () => {
       formData.append("village", data.village);
       formData.append("coordinates", data.coordinates);
       formData.append("buildingType", data.buildingType);
-      formData.append("remarks", data.remarks || "");
+      formData.append("remarks", data.remarks);
 
       // Append operators as multiple values
       data.operators.forEach((operator) => {
