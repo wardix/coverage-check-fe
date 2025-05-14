@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { FormValues, formSchema } from '@/lib/validation';
 import { apiService } from '@/services/api';
-import { toast } from 'react-toastify';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import Skeleton from 'react-loading-skeleton';
+import { toast } from 'react-toastify';
 import SearchableDropdown from './SearchableDropdown';
 
 const OrderForm = () => {
@@ -99,8 +99,8 @@ const OrderForm = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Failed to submit form';
       toast.error(errorMessage);
     } finally {
@@ -379,7 +379,7 @@ const OrderForm = () => {
             render={({ field }) => (
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
+                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov,video/avi,video/webm"
                 onChange={(e) => {
                   // Pass the FileList to the form
                   field.onChange(e.target.files);
@@ -399,9 +399,8 @@ const OrderForm = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${
-              isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
