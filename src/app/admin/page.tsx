@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { apiService, FormSubmission } from '@/services/api';
-import { toast } from 'react-toastify';
-import Skeleton from 'react-loading-skeleton';
-import Link from 'next/link';
 import AdminNavbar from '@/components/AdminNavbar';
+import { apiService, FormSubmission } from '@/services/api';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import { toast } from 'react-toastify';
 
 export default function AdminPage() {
   const [apiKey, setApiKey] = useState('');
@@ -34,7 +34,7 @@ export default function AdminPage() {
       const data = await apiService.getSubmissions(apiKey);
       setSubmissions(data);
       setIsVerified(true);
-      
+
       // Store API key in localStorage
       localStorage.setItem('admin_api_key', apiKey);
       toast.success('API key verified successfully');
@@ -101,9 +101,8 @@ export default function AdminPage() {
             <button
               onClick={verifyApiKey}
               disabled={isLoading}
-              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${
-                isLoading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {isLoading ? 'Verifying...' : 'Login'}
             </button>
@@ -147,6 +146,9 @@ export default function AdminPage() {
                         Photos
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Remarks
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -168,6 +170,9 @@ export default function AdminPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {submission.buildingPhotos?.length || 0} photo(s)
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {submission.remarks}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <Link
