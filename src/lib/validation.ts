@@ -25,15 +25,22 @@ const fileSchema = z
     if (!value) return true;
 
     // Get length properly regardless of type
-    const length =
-      value instanceof FileList
-        ? value.length
-        : Array.isArray(value)
-        ? value.length
-        : 0;
+    // const length =
+    //   value instanceof FileList
+    //     ? value.length
+    //     : Array.isArray(value)
+    //     ? value.length
+    //     : 0;
 
-    return length <= 5;
-  }, "Maximum 5 photos allowed");
+    // Check if the total size is less than 10 MB
+    const maxFileSize = 10 * 1024 * 1024; // 10 MB in bytes
+    const totalSize =
+      (value instanceof FileList &&
+        Array.from(value).reduce((acc, file) => acc + file.size, 0)) ||
+      0;
+
+    return totalSize <= maxFileSize; // 10 MB in bytes
+  }, "Maximum total file size is 10 MB");
 
 export const formSchema = z.object({
   salesmanName: z.string().min(1, "Salesman name is required"),
