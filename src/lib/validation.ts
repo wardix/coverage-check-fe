@@ -42,13 +42,21 @@ const fileSchema = z
     return totalSize <= maxFileSize; // 10 MB in bytes
   }, "Maximum total file size is 10 MB");
 
+const coordinatesSchema = z
+  .string()
+  .min(1, "Coordinates are required")
+  .refine((value) => {
+    const regex = /^(\d+(\.\d+)?),\s*(\d+(\.\d+)?)$/;
+    return regex.test(value);
+  }, "Invalid coordinates format. e.g: 3.456,89.012");
+
 export const formSchema = z.object({
   salesmanName: z.string().min(1, "Salesman name is required"),
   customerName: z.string().min(1, "Customer name is required"),
   customerAddress: z.string().min(1, "Customer address is required"),
   customerHomeNo: z.string().min(1, "Customer Home Number is required"),
   village: z.string().min(1, "Village name is required"),
-  coordinates: z.string().min(1, "Coordinates are required"),
+  coordinates: coordinatesSchema,
   buildingType: z.string().min(1, "Building type is required"),
   operators: z.array(z.string()).min(1, "At least one operator is required"),
   buildingPhotos: fileSchema.optional(),
