@@ -10,6 +10,8 @@ import Skeleton from "react-loading-skeleton";
 import { toast } from "react-toastify";
 import SearchableDropdown from "./SearchableDropdown";
 
+const MAX_FILE_SIZE_TOTAL = 10 * 1024 * 1024; // 10 MB in bytes
+
 const OrderForm = () => {
   const [salesmen, setSalesmen] = useState<string[]>([]);
   const [buildingTypes, setBuildingTypes] = useState<string[]>([]);
@@ -430,9 +432,17 @@ const OrderForm = () => {
             render={({ field }) => (
               <input
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov,video/avi,video/webm"
                 onChange={(e) => {
                   // Pass the FileList to the form
+                  const totalSize = Array.from(e.target.files || []).reduce(
+                    (acc, file) => acc + file.size,
+                    0
+                  );
+                  if (MAX_FILE_SIZE_TOTAL < totalSize) {
+                    toast.error("Total file size exceeds the limit of 10MB.");
+                  }
                   field.onChange(e.target.files);
                 }}
                 className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
@@ -454,8 +464,9 @@ const OrderForm = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors ${
+              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
