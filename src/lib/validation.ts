@@ -46,9 +46,9 @@ const coordinatesSchema = z
   .string()
   .min(1, "Coordinates are required")
   .refine((value) => {
-    const regex = /^(\d+(\.\d+)?),\s*(\d+(\.\d+)?)$/;
+    const regex = /^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/;
     return regex.test(value);
-  }, "Invalid coordinates format. e.g: 3.456,89.012");
+  }, "Invalid coordinates format. e.g: 3.456,89.012 or -3.456,-89.012");
 
 export const formSchema = z.object({
   salesmanName: z.string().min(1, "Salesman name is required"),
