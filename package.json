@@ -11,7 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "axios": "^1.8.4",
-    "next": "15.2.6",
+    "next": "15.2.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",
