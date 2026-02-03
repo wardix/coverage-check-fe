@@ -141,7 +141,7 @@ const OrderForm = () => {
         toast.error("Unable to retrieve your location");
         setIsLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 
@@ -379,7 +379,7 @@ const OrderForm = () => {
                             field.onChange([...currentValues, value]);
                           } else {
                             field.onChange(
-                              currentValues.filter((v) => v !== value)
+                              currentValues.filter((v) => v !== value),
                             );
                           }
                         }}
@@ -433,12 +433,12 @@ const OrderForm = () => {
               <input
                 type="file"
                 multiple
-                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov,video/avi,video/webm"
+                accept="image/jpeg,image/png,video/mp4"
                 onChange={(e) => {
                   // Pass the FileList to the form
                   const totalSize = Array.from(e.target.files || []).reduce(
                     (acc, file) => acc + file.size,
-                    0
+                    0,
                   );
                   if (MAX_FILE_SIZE_TOTAL < totalSize) {
                     toast.error("Total file size exceeds the limit of 10MB.");
@@ -450,7 +450,7 @@ const OrderForm = () => {
             )}
           />
           <p className="mt-1 text-xs text-gray-500">
-            JPG, PNG, GIF, WebP. Max 10MB.
+            JPG, JPEG, PNG, MP4. Max 10MB.
           </p>
           {errors.buildingPhotos && (
             <p className="mt-1 text-sm text-red-600">
