@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface SearchableDropdownProps {
   options: string[];
@@ -20,7 +20,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   onChange,
   placeholder,
   isLoading = false,
-  className = '',
+  className = "",
   id,
   name,
   onSearch,
@@ -28,76 +28,84 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   debounceTime = 500, // Increased default debounce time from 300ms to 500ms
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const previousSearchRef = useRef<string>('');
+  const previousSearchRef = useRef<string>("");
 
   // Filter options based on search input - only used if serverSearchEnabled is false
   const filteredOptions = serverSearchEnabled
     ? options
-    : options.filter(option => option.toLowerCase().includes(searchValue.toLowerCase()));
+    : options.filter((option) =>
+        option.toLowerCase().includes(searchValue.toLowerCase()),
+      );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   // Reset search value when dropdown closes
   useEffect(() => {
     if (!isOpen) {
-      setSearchValue('');
+      setSearchValue("");
     }
   }, [isOpen]);
 
   // Memoized search function with debounce
-  const debouncedSearch = useCallback((query: string) => {
-    // Skip duplicate searches
-    if (query === previousSearchRef.current) return;
+  const debouncedSearch = useCallback(
+    (query: string) => {
+      // Skip duplicate searches
+      if (query === previousSearchRef.current) return;
 
-    // Update the previous search reference
-    previousSearchRef.current = query;
+      // Update the previous search reference
+      previousSearchRef.current = query;
 
-    // Clear any existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+      // Clear any existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
 
-    // Set a new timer
-    debounceTimerRef.current = setTimeout(async () => {
-      if (!query.trim()) {
-        // Skip empty searches or make a special empty search call if needed
+      // Set a new timer
+      debounceTimerRef.current = setTimeout(async () => {
+        if (!query.trim()) {
+          // Skip empty searches or make a special empty search call if needed
+          if (onSearch && serverSearchEnabled && isOpen) {
+            setIsSearching(true);
+            try {
+              await onSearch("");
+            } finally {
+              setIsSearching(false);
+            }
+          }
+          return;
+        }
+
         if (onSearch && serverSearchEnabled && isOpen) {
           setIsSearching(true);
           try {
-            await onSearch('');
+            await onSearch(query);
           } finally {
             setIsSearching(false);
           }
         }
-        return;
-      }
-
-      if (onSearch && serverSearchEnabled && isOpen) {
-        setIsSearching(true);
-        try {
-          await onSearch(query);
-        } finally {
-          setIsSearching(false);
-        }
-      }
-    }, debounceTime);
-  }, [onSearch, serverSearchEnabled, isOpen, debounceTime]);
+      }, debounceTime);
+    },
+    [onSearch, serverSearchEnabled, isOpen, debounceTime],
+  );
 
   // Clean up the timer on unmount
   useEffect(() => {
@@ -139,7 +147,11 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         disabled={isLoading}
       >
         {/* Improved contrast for the selected value or placeholder */}
-        <span className={value ? 'text-gray-900 font-medium' : 'text-gray-500 font-medium'}>
+        <span
+          className={
+            value ? "text-gray-900 font-medium" : "text-gray-500 font-medium"
+          }
+        >
           {value || placeholder}
         </span>
         <svg
@@ -171,21 +183,39 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
           {isLoading || isSearching ? (
             <div className="p-4 text-center text-gray-500">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500 inline"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               Searching...
             </div>
           ) : filteredOptions.length === 0 ? (
-            <div className="p-4 text-center text-gray-700 font-medium">No options found</div>
+            <div className="p-4 text-center text-gray-700 font-medium">
+              No options found
+            </div>
           ) : (
             <ul>
               {filteredOptions.map((option) => (
                 <li
                   key={option}
                   className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-900 font-medium ${
-                    option === value ? 'bg-blue-100' : ''
+                    option === value ? "bg-blue-100" : ""
                   }`}
                   onClick={() => handleSelect(option)}
                 >
@@ -198,12 +228,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       )}
 
       {/* Hidden input for form submission */}
-      <input
-        type="hidden"
-        value={value || ''}
-        id={id}
-        name={name}
-      />
+      <input type="hidden" value={value || ""} id={id} name={name} />
     </div>
   );
 };
