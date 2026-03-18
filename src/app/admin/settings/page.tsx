@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import AdminNavbar from "@/components/AdminNavbar";
 
-// Define a simple response structure type
 interface ApiResponse {
   success?: boolean;
   salesmanData?: Salesman[];
@@ -34,6 +33,16 @@ export default function AdminSettingsPage() {
   const [isLoadingBuildingTypes, setIsLoadingBuildingTypes] = useState(false);
   const [isAddingSalesman, setIsAddingSalesman] = useState(false);
   const [isAddingBuildingType, setIsAddingBuildingType] = useState(false);
+  const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(
+    null,
+  );
+
+  // Delete confirmation dialog state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    employeeId: string;
+    name: string;
+  }>({ open: false, employeeId: "", name: "" });
 
   useEffect(() => {
     // Get API key from localStorage
@@ -53,6 +62,7 @@ export default function AdminSettingsPage() {
     setIsLoadingSalesmen(true);
     try {
       const data = await apiService.getSalesmen();
+      // apiService.getSalesmen() already returns array of objects
       setSalesmen(data);
     } catch (error) {
       console.error("Error fetching salesmen:", error);
@@ -134,6 +144,66 @@ export default function AdminSettingsPage() {
       }
     } finally {
       setIsAddingSalesman(false);
+    }
+  };
+
+  const openDeleteConfirm = (employeeId: string, name: string) => {
+    setDeleteConfirm({ open: true, employeeId, name });
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ open: false, employeeId: "", name: "" });
+  };
+
+  const deleteSalesman = async () => {
+    const { employeeId, name } = deleteConfirm;
+
+    if (!apiKey) {
+      toast.error("Authentication required");
+      router.push("/admin");
+      return;
+    }
+
+    setDeletingEmployeeId(employeeId);
+    closeDeleteConfirm();
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+      const response = await axios.delete<ApiResponse>(
+        `${API_URL}/salesman/${encodeURIComponent(employeeId)}`,
+        {
+          headers: {
+            "X-API-Key": apiKey,
+          },
+        },
+      );
+
+      if (response.data.success) {
+        toast.success(`Salesman "${name}" berhasil dihapus`);
+        if (response.data.salesmanData) {
+          setSalesmen(response.data.salesmanData);
+        } else {
+          setSalesmen((prev) =>
+            prev.filter((s) => s.employee_id !== employeeId),
+          );
+        }
+      } else {
+        toast.error(response.data.error || "Gagal menghapus salesman");
+      }
+    } catch (error) {
+      console.error("Error deleting salesman:", error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorMsg =
+          typeof error.response.data === "object" &&
+          "error" in error.response.data
+            ? String(error.response.data.error)
+            : "Gagal menghapus salesman";
+        toast.error(errorMsg);
+      } else {
+        toast.error("Gagal menghapus salesman");
+      }
+    } finally {
+      setDeletingEmployeeId(null);
     }
   };
 
@@ -224,13 +294,59 @@ export default function AdminSettingsPage() {
                         salesman?.name ||
                         `salesman-${idx}`
                       }
-                      className="mb-2 pb-2 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0"
+                      className="mb-2 pb-2 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0 flex items-center justify-between gap-2"
                     >
-                      <p className="font-medium">{salesman.name}</p>
-                      <p className="text-sm text-gray-500">
-                        ID: {salesman.employee_id} &middot; Branch:{" "}
-                        {salesman.branch_id}
-                      </p>
+                      <div>
+                        <p className="font-medium">{salesman.name}</p>
+                        <p className="text-sm text-gray-500">
+                          ID: {salesman.employee_id} &middot; Branch:{" "}
+                          {salesman.branch_id}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          openDeleteConfirm(salesman.employee_id, salesman.name)
+                        }
+                        disabled={deletingEmployeeId === salesman.employee_id}
+                        className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Hapus salesman"
+                      >
+                        {deletingEmployeeId === salesman.employee_id ? (
+                          <svg
+                            className="w-4 h-4 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        )}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -287,6 +403,57 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Hapus Salesman
+              </h2>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Apakah kamu yakin ingin menghapus salesman{" "}
+              <span className="font-semibold text-gray-900">
+                &quot;{deleteConfirm.name}&quot;
+              </span>
+              ? Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeDeleteConfirm}
+                className="px-4 py-2 rounded-md text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={deleteSalesman}
+                className="px-4 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Salesman Dialog */}
       {isDialogOpen && (
