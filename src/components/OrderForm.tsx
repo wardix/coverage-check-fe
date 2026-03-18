@@ -45,7 +45,11 @@ const OrderForm = () => {
 
         // Get initial salesmen list (could be limited to top results)
         const salesmenData = await apiService.searchSalesmen("");
-        setSalesmen(salesmenData);
+        setSalesmen(
+          salesmenData.map(
+            (s) => `${s.name}${s.employee_id ? ` - ${s.employee_id}` : ""}`,
+          ),
+        ); // Assuming salesman object has a 'name' property
 
         // Get initial villages list
         const villagesData = await apiService.searchVillages("");
@@ -187,7 +191,12 @@ const OrderForm = () => {
 
                   try {
                     const results = await apiService.searchSalesmen(query);
-                    setSalesmen(results);
+                    setSalesmen(
+                      results.map(
+                        (s) =>
+                          `${s.name}${s.employee_id ? ` - ${s.employee_id}` : ""}`,
+                      ),
+                    ); // Assuming salesman object has a 'name' property
                   } catch (error) {
                     console.error("Error searching salesmen:", error);
                     toast.error("Failed to search salesmen");

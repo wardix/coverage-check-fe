@@ -3,6 +3,12 @@ import axios from "axios";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
 // Define types
+export type Salesman = {
+  name: string;
+  employee_id: string;
+  branch_id: string;
+};
+
 export type FormSubmission = {
   id: string;
   timestamp: string;
@@ -41,14 +47,14 @@ export const apiService = {
   },
 
   // Get salesmen list (all)
-  getSalesmen: async (): Promise<string[]> => {
-    const response = await api.get<string[]>("/salesman");
+  getSalesmen: async (): Promise<Salesman[]> => {
+    const response = await api.get<Salesman[]>("/salesman");
     return response.data;
   },
 
   // Search salesmen (with query parameter)
-  searchSalesmen: async (query: string): Promise<string[]> => {
-    const response = await api.get<string[]>(`/salesman/search`, {
+  searchSalesmen: async (query: string): Promise<Salesman[]> => {
+    const response = await api.get<Salesman[]>(`/salesman/search`, {
       params: { query },
     });
     return response.data;
@@ -77,7 +83,7 @@ export const apiService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -95,7 +101,7 @@ export const apiService = {
   // Get a single submission (requires API key)
   getSubmission: async (
     id: string,
-    apiKey: string
+    apiKey: string,
   ): Promise<FormSubmission> => {
     const response = await api.get<FormSubmission>(`/submissions/${id}`, {
       headers: {
