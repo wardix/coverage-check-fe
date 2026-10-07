@@ -158,6 +158,11 @@ export default function SubmissionDetailPage() {
               </div>
 
               <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Service Type</p>
+                <p className="text-gray-900 font-medium">{submission.serviceType}</p>
+              </div>
+
+              <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
                 <p className="text-sm font-medium text-gray-600 mb-1">Operators</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {submission.operators.map((operator) => (

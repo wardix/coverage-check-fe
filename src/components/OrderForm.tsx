@@ -32,6 +32,7 @@ const OrderForm = () => {
       operators: [],
       coordinates: "",
       village: "",
+      serviceType: "",
     },
   });
 
@@ -78,6 +79,7 @@ const OrderForm = () => {
       formData.append("village", data.village);
       formData.append("coordinates", data.coordinates);
       formData.append("buildingType", data.buildingType);
+      formData.append("serviceType", data.serviceType);
       formData.append("remarks", data.remarks);
 
       // Append operators as multiple values
@@ -116,6 +118,14 @@ const OrderForm = () => {
 
   // Common operators for selection
   const commonOperators = ["CGS", "FS", "SIP"];
+
+  // Available service types
+  const serviceTypes = [
+    "Broadband Home",
+    "Broadband Business",
+    "Dedicated",
+    "Migrasi",
+  ];
 
   // Function to get user's current location
   const getCurrentLocation = () => {
@@ -234,6 +244,31 @@ const OrderForm = () => {
           {errors.buildingType && (
             <p className="mt-1 text-sm text-red-600">
               {errors.buildingType.message?.toString()}
+            </p>
+          )}
+        </div>
+
+        {/* Service Type Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Service Type*
+          </label>
+          <Controller
+            name="serviceType"
+            control={control}
+            render={({ field }) => (
+              <SearchableDropdown
+                options={serviceTypes}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select service type"
+                id="serviceType"
+              />
+            )}
+          />
+          {errors.serviceType && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.serviceType.message?.toString()}
             </p>
           )}
         </div>

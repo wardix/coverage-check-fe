@@ -58,6 +58,7 @@ export const formSchema = z.object({
   village: z.string().min(1, "Village name is required"),
   coordinates: coordinatesSchema,
   buildingType: z.string().min(1, "Building type is required"),
+  serviceType: z.string().min(1, "Service type is required"),
   operators: z.array(z.string()).min(1, "At least one operator is required"),
   buildingPhotos: fileSchema.optional(),
   remarks: z.string(),

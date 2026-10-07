@@ -18,6 +18,7 @@ export type FormSubmission = {
   village: string; // Added village field
   coordinates: string;
   buildingType: string;
+  serviceType: string;
   operators: string[];
   remarks: string;
   buildingPhotos?: string[];
