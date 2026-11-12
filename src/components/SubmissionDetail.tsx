@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiService, FormSubmission } from '@/services/api';
 import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
@@ -9,10 +9,27 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AdminNavbar from '@/components/AdminNavbar';
 
-export default function SubmissionDetailPage() {
-  const params = useParams();
+export function SubmissionDetailSkeleton() {
+  return (
+    <div className="min-h-screen">
+      <AdminNavbar />
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Skeleton height={50} className="mb-6" />
+        <Skeleton height={30} className="mb-4" count={8} />
+        <Skeleton height={200} className="mb-4" count={2} />
+      </div>
+    </div>
+  );
+}
+
+// The submission ID comes from the query string (/admin/submission?id=<id>)
+// instead of a dynamic [id] segment, so the page can be statically exported.
+export default function SubmissionDetail() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const submissionId = params.id as string;
+  const submissionId = searchParams.get('id') ?? '';
+  // Submission IDs are UUIDs; reject anything else before it reaches the API path.
+  const isValidId = /^[A-Za-z0-9-]+$/.test(submissionId);
 
   const [submission, setSubmission] = useState<FormSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +50,12 @@ export default function SubmissionDetailPage() {
   }, [submissionId, router]);
 
   useEffect(() => {
+    if (!isValidId) {
+      toast.error('Submission ID is missing or invalid', { toastId: 'invalid-submission-id' });
+      router.replace('/admin');
+      return;
+    }
+
     // Get API key from localStorage
     const storedKey = localStorage.getItem('admin_api_key');
     if (!storedKey) {
@@ -42,7 +65,7 @@ export default function SubmissionDetailPage() {
     }
 
     fetchSubmission(storedKey);
-  }, [fetchSubmission, router]);
+  }, [fetchSubmission, router, isValidId]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -50,16 +73,7 @@ export default function SubmissionDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <AdminNavbar />
-        <div className="container mx-auto p-6 max-w-4xl">
-          <Skeleton height={50} className="mb-6" />
-          <Skeleton height={30} className="mb-4" count={8} />
-          <Skeleton height={200} className="mb-4" count={2} />
-        </div>
-      </div>
-    );
+    return <SubmissionDetailSkeleton />;
   }
 
   if (!submission) {
