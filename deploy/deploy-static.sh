@@ -1,30 +1,25 @@
 #!/usr/bin/env bash
 #
 # deploy-static.sh - build frontend jadi file statis (Next.js `output: 'export'`,
-# Vite, dll), lalu taruh di folder yang di-serve langsung oleh nginx. Tidak ada
-# proses Node.js maupun PM2 yang jalan terus.
-#
-# Dijalankan langsung di server nginx, dari folder repo:
-#   git pull && npm run deploy
+# Vite, dll), lalu kirim ke folder yang di-serve langsung oleh nginx. Server
+# tidak butuh Node.js maupun PM2.
 #
 # Pemakaian:
-#   bash deploy/deploy-static.sh [env] [opsi]
+#   bash deploy/deploy-static.sh <env> [opsi]
 #
-#   [env]  opsional. Tanpa env: pakai deploy/default.env kalau ada, kalau tidak
-#          ada pakai nilai default (deploy ke /var/www/<nama-folder-repo> di
-#          mesin ini). Dengan env: pakai deploy/<env>.env (contoh: dev, prod).
+#   <env>  nama config: deploy/<env>.env (contoh: dev, prod)
 #
 # Opsi:
 #   --skip-install  lewati install dependency
 #   --skip-build    pakai out/ hasil build sebelumnya
-#   --list          tampilkan daftar release
+#   --list          tampilkan daftar release di server
 #   --rollback      kembali ke release sebelumnya (tanpa build); release yang
 #                   ditinggalkan dihapus
 #   --force         lewati cek branch dan cek working tree bersih
 #   -y, --yes       jalan tanpa konfirmasi
 #   -h, --help      tampilkan bantuan ini
 #
-# Struktur di DEPLOY_PATH:
+# Struktur di server (DEPLOY_PATH):
 #   releases/<waktu-UTC>-<commit>/  isi OUT_DIR untuk tiap deploy
 #   current -> releases/...         symlink yang jadi `root` nginx
 #   .deploy.lock/                   ada selama deploy/rollback berjalan
@@ -80,95 +75,46 @@ parse_args() {
     shift
   done
 
-  [[ -z "$ENV_NAME" || "$ENV_NAME" =~ ^[A-Za-z0-9_-]+$ ]] || die "Nama env tidak valid: $ENV_NAME"
-}
-
-# Path fisik (symlink diikuti). Untuk path yang belum ada, folder induk terdekat
-# yang sudah ada yang di-resolve, sisanya ditempel apa adanya.
-real_dir() {
-  local p="$1" rest=""
-  while [[ -n "$p" && ! -d "$p" ]]; do
-    rest="/${p##*/}$rest"
-    p="${p%/*}"
-  done
-  if [[ -n "$p" ]]; then p="$(cd "$p" && pwd -P)"; fi
-  printf '%s%s\n' "${p%/}" "$rest"
-}
-
-# has_file <glob-yang-sudah-diekspansi...>: true kalau minimal satu file ada.
-has_file() {
-  local f
-  for f in "$@"; do [[ -e "$f" ]] && return 0; done
-  return 1
+  if [[ -z "$ENV_NAME" ]]; then
+    usage
+    die "<env> wajib diisi, contoh: bash deploy/deploy-static.sh prod"
+  fi
+  [[ "$ENV_NAME" =~ ^[A-Za-z0-9_-]+$ ]] || die "Nama env tidak valid: $ENV_NAME"
 }
 
 load_config() {
-  CONFIG_FILE=""
-  if [[ -n "$ENV_NAME" ]]; then
-    CONFIG_FILE="$SCRIPT_DIR/$ENV_NAME.env"
-    [[ -f "$CONFIG_FILE" ]] ||
-      die "Config $CONFIG_FILE tidak ada. Buat dari contoh: cp deploy/env.example deploy/$ENV_NAME.env (atau jalankan tanpa <env> untuk pakai default)"
-  elif [[ -f "$SCRIPT_DIR/default.env" ]]; then
-    CONFIG_FILE="$SCRIPT_DIR/default.env"
-  fi
-  CONFIG_DESC="${CONFIG_FILE:+deploy/${CONFIG_FILE##*/}}"
-  CONFIG_DESC="${CONFIG_DESC:-default (tanpa file config)}"
+  CONFIG_FILE="$SCRIPT_DIR/$ENV_NAME.env"
+  [[ -f "$CONFIG_FILE" ]] ||
+    die "Config $CONFIG_FILE tidak ada. Buat dari contoh: cp deploy/env.example deploy/$ENV_NAME.env"
 
-  # Di-unset dulu supaya variabel dengan nama sama di shell tidak ikut terpakai
-  # (atau ter-export ke build). Yang tidak diisi file config, atau diisi
-  # kosong, memakai default.
-  unset DEPLOY_HOST DEPLOY_USER DEPLOY_PORT DEPLOY_SSH_OPTS DEPLOY_PATH \
-    DEPLOY_BRANCH DEPLOY_URL GIT_PULL KEEP_RELEASES INSTALL_CMD BUILD_CMD OUT_DIR
+  # Default; boleh di-override di file config.
+  DEPLOY_HOST=""
+  DEPLOY_USER=""
+  DEPLOY_PORT="22"
+  DEPLOY_SSH_OPTS=""
+  DEPLOY_PATH=""
+  DEPLOY_BRANCH=""
+  DEPLOY_URL=""
+  GIT_PULL="0"
+  KEEP_RELEASES="5"
+  INSTALL_CMD=""
+  BUILD_CMD="npm run build"
+  OUT_DIR="out"
 
-  if [[ -n "$CONFIG_FILE" ]]; then
-    # set -a: semua variabel di config ikut ter-export, termasuk NEXT_PUBLIC_*
-    # yang dibutuhkan saat build.
-    set -a
-    # shellcheck source=/dev/null
-    source "$CONFIG_FILE"
-    set +a
-  fi
+  # set -a: semua variabel di config ikut ter-export, termasuk NEXT_PUBLIC_*
+  # yang dibutuhkan saat build.
+  set -a
+  # shellcheck source=/dev/null
+  source "$CONFIG_FILE"
+  set +a
 
-  DEPLOY_HOST="${DEPLOY_HOST:-}"
-  DEPLOY_USER="${DEPLOY_USER:-}"
-  DEPLOY_PORT="${DEPLOY_PORT:-22}"
-  DEPLOY_SSH_OPTS="${DEPLOY_SSH_OPTS:-}"
-  DEPLOY_PATH="${DEPLOY_PATH:-}"
-  DEPLOY_BRANCH="${DEPLOY_BRANCH:-}"
-  DEPLOY_URL="${DEPLOY_URL:-}"
-  GIT_PULL="${GIT_PULL:-0}"
-  KEEP_RELEASES="${KEEP_RELEASES:-5}"
-  INSTALL_CMD="${INSTALL_CMD:-}"
-  BUILD_CMD="${BUILD_CMD:-npm run build}"
-  if [[ -z "${OUT_DIR:-}" ]]; then
-    # Next.js export ke out/, Vite ke dist/. vite.config.* di project Next.js
-    # (biasanya untuk Vitest) tidak dihitung.
-    OUT_DIR="out"
-    if ! has_file "$PROJECT_ROOT"/next.config.* && has_file "$PROJECT_ROOT"/vite.config.*; then
-      OUT_DIR="dist"
-    fi
-  fi
-  [[ -n "$DEPLOY_HOST" ]] && IS_REMOTE=1 || IS_REMOTE=0
-
-  local repo_real
-  repo_real="$(real_dir "$PROJECT_ROOT")"
   DEPLOY_PATH="${DEPLOY_PATH%/}"
-  if [[ -z "$DEPLOY_PATH" ]]; then
-    # Nama folder repo di mesin build tidak ada hubungannya dengan server lain.
-    [[ $IS_REMOTE -eq 0 ]] || die "DEPLOY_PATH wajib diisi di $CONFIG_DESC kalau DEPLOY_HOST diisi"
-    DEPLOY_PATH="/var/www/$(basename "$PROJECT_ROOT")"
-    # Repo di-clone langsung di /var/www/<nama> (pola lama PM2): pakai folder
-    # sebelahnya supaya release tidak bercampur dengan isi repo.
-    if [[ $IS_REMOTE -eq 0 && "$(real_dir "$DEPLOY_PATH")" == "$repo_real" ]]; then
-      DEPLOY_PATH="$DEPLOY_PATH-static"
-    fi
-  fi
-
+  [[ -n "$DEPLOY_PATH" ]] || die "DEPLOY_PATH wajib diisi di $CONFIG_FILE"
   # Absolut, minimal 2 level, tanpa //, . atau .., dan hanya karakter aman
   # (supaya quoting ke shell server tidak bisa salah tafsir).
   local path_re='^(/[A-Za-z0-9_-][A-Za-z0-9._ -]*){2,}$'
   [[ "$DEPLOY_PATH" =~ $path_re ]] ||
-    die "DEPLOY_PATH tidak valid: '$DEPLOY_PATH' (harus absolut, minimal 2 level, karakter A-Z a-z 0-9 . _ - spasi). Set DEPLOY_PATH di file config, lihat deploy/env.example"
+    die "DEPLOY_PATH tidak valid: '$DEPLOY_PATH' (harus absolut, minimal 2 level, karakter A-Z a-z 0-9 . _ - spasi)"
   case "$DEPLOY_PATH" in
     /bin | /etc | /home | /opt | /root | /srv | /tmp | /usr | /var | /var/www | /var/www/html)
       die "DEPLOY_PATH terlalu umum ($DEPLOY_PATH), pakai folder khusus app ini" ;;
@@ -176,20 +122,15 @@ load_config() {
   [[ "$KEEP_RELEASES" =~ ^[1-9][0-9]*$ ]] || die "KEEP_RELEASES harus angka >= 1"
   [[ "$OUT_DIR" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]*$ ]] || die "OUT_DIR tidak valid: $OUT_DIR"
 
-  if [[ $IS_REMOTE -eq 1 ]]; then
+  if [[ -n "$DEPLOY_HOST" ]]; then
+    IS_REMOTE=1
     SSH_TARGET="${DEPLOY_USER:+$DEPLOY_USER@}$DEPLOY_HOST"
     SSH_CMD="ssh -p $DEPLOY_PORT $DEPLOY_SSH_OPTS"
     TARGET_DESC="$SSH_TARGET:$DEPLOY_PATH"
     command -v ssh >/dev/null || die "ssh tidak ditemukan"
   else
-    # Release di dalam repo ikut terhapus oleh git clean dan membuat working
-    # tree selalu kotor. Repo di dalam DEPLOY_PATH ditolak oleh target_prepare
-    # (folder sudah berisi file lain).
-    case "$(real_dir "$DEPLOY_PATH")/" in
-      "$repo_real/"* | "$PROJECT_ROOT/"*)
-        die "DEPLOY_PATH ($DEPLOY_PATH) sama dengan atau di dalam folder repo ($PROJECT_ROOT). Pakai folder di luar repo, misalnya /var/www/$(basename "$PROJECT_ROOT")-static" ;;
-    esac
-    TARGET_DESC="$DEPLOY_PATH (mesin ini)"
+    IS_REMOTE=0
+    TARGET_DESC="$DEPLOY_PATH (lokal)"
   fi
 }
 
@@ -210,10 +151,6 @@ set -eu
 umask 022
 LOCK=.deploy.lock
 acquire_lock() { # $1 = keterangan pemegang lock
-  [ -w . ] || {
-    echo "ERROR: user $(id -un) tidak punya hak tulis di $PWD. Perbaiki: sudo chown -R $(id -un): \"$PWD\"" >&2
-    exit 1
-  }
   if ! mkdir "$LOCK" 2>/dev/null; then
     echo "ERROR: deploy/rollback lain sedang berjalan di $PWD ($(cat "$LOCK/owner" 2>/dev/null || echo '?'))." >&2
     echo "       Kalau yakin tidak ada yang jalan, hapus manual: rm -rf '$PWD/$LOCK'" >&2
@@ -278,23 +215,7 @@ echo "current: $cur -> $prev (release $cur dihapus)"' "$DEPLOY_PATH"
 target_prepare() {
   # shellcheck disable=SC2016 # dievaluasi di server
   run_on_target '
-# Jangan menulis ke folder yang sudah dipakai hal lain (misalnya clone repo lama
-# atau root nginx lama berisi file langsung).
-if [ -d "$1" ] && [ ! -d "$1/releases" ] && [ ! -L "$1/current" ] && [ -n "$(ls -A "$1" 2>/dev/null)" ]; then
-  echo "ERROR: $1 sudah berisi file lain, bukan release dari script ini." >&2
-  echo "       Pakai folder baru untuk DEPLOY_PATH (set di file config, lihat deploy/env.example)." >&2
-  exit 1
-fi
-mkdir -p "$1/releases" || {
-  echo "ERROR: tidak bisa membuat $1/releases sebagai user $(id -un). Siapkan sekali:" >&2
-  echo "       sudo mkdir -p \"$1\" && sudo chown $(id -un): \"$1\"" >&2
-  exit 1
-}
-[ -w "$1/releases" ] || {
-  echo "ERROR: user $(id -un) tidak punya hak tulis di $1/releases. Perbaiki:" >&2
-  echo "       sudo chown -R $(id -un): \"$1\"" >&2
-  exit 1
-}
+mkdir -p "$1/releases"
 cd "$1"
 if [ -e current ] && [ ! -L current ]; then
   echo "ERROR: $1/current sudah ada tapi bukan symlink. Pindahkan dulu (lihat deploy/README.md)." >&2
@@ -351,7 +272,7 @@ check_git() {
 
   GIT_BRANCH="$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD)"
   if [[ -n "$DEPLOY_BRANCH" && "$GIT_BRANCH" != "$DEPLOY_BRANCH" ]]; then
-    [[ $FORCE -eq 1 ]] || die "Branch aktif '$GIT_BRANCH', $CONFIG_DESC mewajibkan branch '$DEPLOY_BRANCH' (pakai --force untuk melewati)"
+    [[ $FORCE -eq 1 ]] || die "Branch aktif '$GIT_BRANCH', env '$ENV_NAME' wajib dari '$DEPLOY_BRANCH' (pakai --force untuk melewati)"
     warn "Deploy dari branch '$GIT_BRANCH', bukan '$DEPLOY_BRANCH'"
   fi
 
@@ -421,8 +342,8 @@ deploy() {
   OUT_PATH="$PROJECT_ROOT/$OUT_DIR"
 
   check_git
-  printf '\n  config : %s\n  tujuan : %s\n  branch : %s\n  build  : %s\n\n' \
-    "$CONFIG_DESC" "$TARGET_DESC" "$GIT_BRANCH" "$([[ $SKIP_BUILD -eq 1 ]] && echo "pakai $OUT_DIR/ yang ada" || echo ya)"
+  printf '\n  env    : %s\n  tujuan : %s\n  branch : %s\n  build  : %s\n\n' \
+    "$ENV_NAME" "$TARGET_DESC" "$GIT_BRANCH" "$([[ $SKIP_BUILD -eq 1 ]] && echo "pakai $OUT_DIR/ yang ada" || echo ya)"
   confirm "Lanjut deploy?"
   git_pull
 
@@ -442,8 +363,8 @@ deploy() {
   # Kalau gagal/dibatalkan sebelum aktif: hapus release parsial dan lepas lock.
   PENDING_RELEASE="$release"
 
-  info "Salin $OUT_DIR/ ke release"
-  upload "$release" || die "Salin $OUT_DIR/ gagal. current tidak berubah."
+  info "Upload $OUT_DIR/"
+  upload "$release" || die "Upload gagal. current tidak berubah."
 
   info "Aktifkan release"
   target_activate "$release"
@@ -453,7 +374,7 @@ deploy() {
     if curl -fsS -o /dev/null --max-time 15 "$DEPLOY_URL"; then
       ok "Cek $DEPLOY_URL OK"
     else
-      warn "Cek $DEPLOY_URL gagal. Periksa nginx; kembalikan dengan: bash deploy/deploy-static.sh ${ENV_NAME:+$ENV_NAME }--rollback"
+      warn "Cek $DEPLOY_URL gagal. Periksa nginx; kembalikan dengan: bash deploy/deploy-static.sh $ENV_NAME --rollback"
     fi
   fi
 

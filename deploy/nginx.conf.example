@@ -8,7 +8,6 @@ server {
     server_name cc.example.nusa.net.id;
 
     # Symlink yang dibuat deploy-static.sh; selalu menunjuk release aktif.
-    # Path = baris `tujuan` saat `npm run deploy`, ditambah /current.
     root /var/www/coverage-check-fe/current;
     index index.html;
 
