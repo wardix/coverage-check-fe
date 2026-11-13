@@ -104,7 +104,7 @@ export const apiService = {
     id: string,
     apiKey: string,
   ): Promise<FormSubmission> => {
-    const response = await api.get<FormSubmission>(`/submissions/${id}`, {
+    const response = await api.get<FormSubmission>(`/submissions/${encodeURIComponent(id)}`, {
       headers: {
         "X-API-Key": apiKey,
       },

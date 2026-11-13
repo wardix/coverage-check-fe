@@ -1,0 +1,58 @@
+# Server block nginx untuk coverage-check-fe (Next.js static export).
+# Sesuaikan server_name, root, SSL, dan alamat backend, lalu:
+#   sudo nginx -t && sudo systemctl reload nginx
+# Setelah aman, matikan proses `next start` lama di PM2.
+
+server {
+    listen 80;
+    server_name cc.example.nusa.net.id;
+
+    # Symlink yang dibuat deploy-static.sh; selalu menunjuk release aktif.
+    root /var/www/coverage-check-fe/current;
+    index index.html;
+
+    # Tolak file tersembunyi (.env, .git, dll), kecuali .well-known untuk certbot.
+    location ~ /\.(?!well-known/) {
+        deny all;
+    }
+
+    # Foto submission disimpan dan di-serve oleh coverage-check-be (/uploads/*).
+    # Pertahankan blok proxy /uploads (dan /api kalau NEXT_PUBLIC_API_URL relatif)
+    # yang sudah ada di config lama. Port HARUS port coverage-check-be, bukan
+    # port `next start` lama yang akan dimatikan; 3000 di bawah hanya contoh.
+    location ^~ /uploads/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # URL detail lama /admin/submission/<id> pindah ke /admin/submission?id=<id>.
+    # Hanya karakter UUID: $uri sudah di-decode, jadi capture bebas bisa membawa
+    # CR/LF (header injection) atau & dan # yang merusak query string.
+    location ~ ^/admin/submission/([A-Za-z0-9-]+)/?$ {
+        return 301 /admin/submission?id=$1;
+    }
+
+    # Aset Next.js ber-hash di nama file: aman di-cache selamanya.
+    location /_next/static/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    # Halaman HTML: browser wajib revalidate supaya deploy baru langsung terlihat.
+    # /admin -> admin.html, /admin/settings -> admin/settings.html
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+        add_header Cache-Control "no-cache";
+    }
+
+    error_page 404 /404.html;
+
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+}

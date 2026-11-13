@@ -42,3 +42,5 @@ next-env.d.ts
 
 #nvm
 .nvmrc
+# config deploy per environment (deploy/deploy-static.sh)
+/deploy/*.env

@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "bash deploy/deploy-static.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
